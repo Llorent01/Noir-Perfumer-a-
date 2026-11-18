@@ -1,0 +1,80 @@
+{% extends "admin_base.html" %}
+{% block titulo %}Venta #{{ p.id }} — Noir{% endblock %}
+{% block contenido %}
+
+  <a href="{{ url_for('ventas.lista') }}" class="adm-back">← Volver a ventas</a>
+
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow">Venta #{{ p.id }} · {{ p.fecha|fecha }}</span>
+      <h1>{{ p.cliente_nombre }}</h1>
+      {% if p.detalle %}
+        <p>{{ p.detalle.cantidad }} × {{ p.detalle.ml }} ML de {{ p.detalle.perfume.nombre }} ({{ p.detalle.perfume.marca }})</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="adm-stats">
+    <div class="adm-stat"><div class="adm-stat-label">Total</div><div class="adm-stat-value">{{ p.total|pesos }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Abonado</div><div class="adm-stat-value">{{ p.abonado|pesos }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Debe</div><div class="adm-stat-value">{{ p.debe|pesos }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Estado</div><div class="adm-stat-value">{{ "Debe" if p.debe > 0 else "Pagada" }}</div></div>
+  </div>
+
+  {% if mensaje %}<div class="adm-msg ok">{{ mensaje }}</div>{% endif %}
+  {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
+
+  {% if p.debe > 0 %}
+  <section class="adm-card">
+    <h2>Registrar abono</h2>
+    <p class="adm-card-sub">Lo máximo que puede abonar ahora es {{ p.debe|pesos }}.</p>
+    <form class="form-validar" method="post" action="{{ url_for('ventas.nuevo_abono', id=p.id) }}">
+      <input type="hidden" name="token" value="{{ token }}">
+      <div class="adm-fields">
+        <div class="field">
+          <label for="monto">Monto del abono</label>
+          <div class="adm-money"><span>$</span><input type="number" id="monto" name="monto" min="1" max="{{ p.debe }}" step="1" required></div>
+        </div>
+      </div>
+      <div class="adm-form-actions">
+        <button type="submit" class="btn btn-primary">Guardar abono</button>
+      </div>
+    </form>
+  </section>
+  {% endif %}
+
+  <h2 style="margin:2rem 0 1rem;">Historial de abonos</h2>
+  <div class="adm-table-wrap">
+    {% if p.abonos|length == 0 %}
+      <div class="adm-empty">Todavía no hay abonos registrados.</div>
+    {% else %}
+    <table class="adm-table">
+      <thead><tr><th>Fecha</th><th>Monto</th><th></th></tr></thead>
+      <tbody>
+        {% for a in p.abonos %}
+        <tr>
+          <td>{{ a.fecha|fecha }}</td>
+          <td class="num">{{ a.monto|pesos }}</td>
+          <td>
+            <div class="adm-actions">
+              <form method="post" action="{{ url_for('ventas.eliminar_abono', id=p.id, abono_id=a.id) }}" onsubmit="return confirm('¿Eliminar este abono?');">
+                <input type="hidden" name="token" value="{{ token }}">
+                <button type="submit" class="adm-btn-del">Eliminar</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+
+  <div class="adm-form-actions">
+    <form method="post" action="{{ url_for('ventas.eliminar', id=p.id) }}" onsubmit="return confirm('¿Eliminar esta venta y todos sus abonos?');">
+      <input type="hidden" name="token" value="{{ token }}">
+      <button type="submit" class="adm-btn-del">Eliminar venta</button>
+    </form>
+  </div>
+
+{% endblock %}

@@ -1,0 +1,161 @@
+{% extends "admin_base.html" %}
+{% block titulo %}{{ "Editar" if id > 0 else "Agregar" }} perfume — Noir{% endblock %}
+{% block contenido %}
+
+  <a href="{{ url_for('admin.panel') }}" class="adm-back">← Volver a perfumes</a>
+
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow">{{ "Editar ficha" if id > 0 else "Nueva ficha" }}</span>
+      <h1>{{ d.nombre if id > 0 else "Agregar perfume" }}</h1>
+      <p>Esta información es la que verán tus clientes en el catálogo y en la ficha de cada fragancia.</p>
+    </div>
+    <svg class="adm-ripple" viewBox="0 0 300 300" aria-hidden="true">
+      <circle cx="150" cy="150" r="60"/>
+      <circle cx="150" cy="150" r="100"/>
+      <circle cx="150" cy="150" r="140"/>
+    </svg>
+  </div>
+
+  <form method="post" action="{{ url_for('admin.formulario', id=id) if id > 0 else url_for('admin.formulario') }}" enctype="multipart/form-data" class="form-validar">
+    <input type="hidden" name="token" value="{{ token }}">
+
+    <div class="adm-form-grid">
+
+      <div>
+        <section class="adm-card">
+          <h2>Información</h2>
+          <p class="adm-card-sub">Nombre, marca y características de la fragancia.</p>
+          <div class="adm-fields">
+            <div class="field">
+              <label for="nombre">Nombre</label>
+              <input type="text" id="nombre" name="nombre" value="{{ d.nombre }}" required>
+            </div>
+            <div class="field">
+              <label for="marca">Marca</label>
+              <input type="text" id="marca" name="marca" value="{{ d.marca }}" required>
+            </div>
+            <div class="field">
+              <label for="genero">Género</label>
+              <select id="genero" name="genero">
+                {% for g in generos %}
+                  <option value="{{ g }}" {% if d.genero == g %}selected{% endif %}>{{ g }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label for="familia_tag">Tipo de fragancia (filtro)</label>
+              <input type="text" id="familia_tag" name="familia_tag" list="lista_tags" value="{{ d.familia_tag }}" required>
+              <datalist id="lista_tags">
+                {% for e in etiquetas %}<option value="{{ e }}">{% endfor %}
+              </datalist>
+            </div>
+            <div class="field full">
+              <label for="familia">Familia olfativa (ej: Oriental Especiado)</label>
+              <input type="text" id="familia" name="familia" value="{{ d.familia }}" required>
+            </div>
+            <div class="field full">
+              <label for="notas">Notas de la fragancia</label>
+              <textarea id="notas" name="notas" rows="2">{{ d.notas }}</textarea>
+            </div>
+            <div class="field full">
+              <label for="descripcion">Descripción</label>
+              <textarea id="descripcion" name="descripcion" rows="4">{{ d.descripcion }}</textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="adm-card">
+          <h2>Presentaciones y precios</h2>
+          <p class="adm-card-sub">Los decants de 5 ML y 10 ML son la presentación principal de Noir y son obligatorios. Si dejas un precio opcional vacío, esa presentación no se muestra.</p>
+          <div class="adm-fields">
+            <div class="field">
+              <label for="precio5" class="adm-size-label">5 ML <em>OBLIGATORIO</em></label>
+              <div class="adm-money"><span>$</span><input type="number" id="precio5" name="precio5" min="1" step="1" value="{{ d.precio5 }}" required></div>
+            </div>
+            <div class="field">
+              <label for="precio10" class="adm-size-label">10 ML <em>OBLIGATORIO</em></label>
+              <div class="adm-money"><span>$</span><input type="number" id="precio10" name="precio10" min="1" step="1" value="{{ d.precio10 }}" required></div>
+            </div>
+            <div class="field">
+              <label for="precio15">15 ML (opcional)</label>
+              <div class="adm-money"><span>$</span><input type="number" id="precio15" name="precio15" min="1" step="1" value="{{ d.precio15 }}"></div>
+            </div>
+            <div class="field">
+              <label for="precio20">20 ML (opcional)</label>
+              <div class="adm-money"><span>$</span><input type="number" id="precio20" name="precio20" min="1" step="1" value="{{ d.precio20 }}"></div>
+            </div>
+            <div class="field full">
+              <label for="precio100">Frasco completo 100 ML (opcional)</label>
+              <div class="adm-money"><span>$</span><input type="number" id="precio100" name="precio100" min="1" step="1" value="{{ d.precio100 }}"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div>
+        <section class="adm-card">
+          <h2>Imagen</h2>
+          <p class="adm-card-sub">Usa una foto vertical, como las demás del catálogo.</p>
+          <div class="adm-preview" id="cajaVista">
+            {% if d.imagen %}
+              <img src="{{ url_for('static', filename=d.imagen) }}" alt="" id="vista" onerror="this.style.display='none';">
+            {% else %}
+              <img src="" alt="" id="vista" style="display:none;">
+              <span id="sinImagen">Aún no has elegido una imagen</span>
+            {% endif %}
+          </div>
+          <input type="file" id="imagen" name="imagen" class="adm-file" accept="image/jpeg,image/png,image/webp" data-max-mb="2" {% if id == 0 %}required{% endif %}>
+          <p class="adm-hint">JPG, PNG o WEBP, máximo 2 MB.{% if id > 0 %} Si no eliges una nueva, se conserva la actual.{% endif %}</p>
+        </section>
+
+        <section class="adm-card">
+          <h2>Visibilidad</h2>
+          <p class="adm-card-sub">Cómo aparece este perfume en la tienda.</p>
+          <label class="adm-switch-row">
+            <span class="adm-switch-text">
+              <strong>Disponible</strong>
+              <span>Si lo apagas, se muestra como Agotado.</span>
+            </span>
+            <input type="checkbox" class="adm-switch" name="disponible" value="1" {% if d.disponible == 1 %}checked{% endif %}>
+          </label>
+          <label class="adm-switch-row">
+            <span class="adm-switch-text">
+              <strong>Más vendido</strong>
+              <span>Lo incluye en el carrusel de más vendidos.</span>
+            </span>
+            <input type="checkbox" class="adm-switch" name="mas_vendido" value="1" {% if d.mas_vendido == 1 %}checked{% endif %}>
+          </label>
+        </section>
+      </div>
+
+    </div>
+
+    {% if error %}
+      <div class="adm-error">{{ error }}</div>
+    {% endif %}
+
+    <div class="adm-form-actions">
+      <a href="{{ url_for('admin.panel') }}" class="btn btn-outline">Cancelar</a>
+      <button type="submit" class="btn btn-primary">Guardar perfume</button>
+    </div>
+  </form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("imagen").onchange = function () {
+  var archivo = this.files[0];
+  if (archivo) {
+    var vista = document.getElementById("vista");
+    vista.src = URL.createObjectURL(archivo);
+    vista.style.display = "block";
+    var aviso = document.getElementById("sinImagen");
+    if (aviso) {
+      aviso.style.display = "none";
+    }
+  }
+};
+</script>
+{% endblock %}

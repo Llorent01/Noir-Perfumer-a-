@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block titulo %}Administración — Noir{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='fonts.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+<link rel="icon" type="image/jpg" href="{{ url_for('static', filename='img/Logo 640px.jpg') }}">
+</head>
+<body>
+
+<header class="adm-bar">
+  <div class="adm-bar-inner">
+    <a href="{{ url_for('tienda.inicio') }}" class="logo" aria-label="Noir — Tienda">
+      <img src="{{ url_for('static', filename='img/Logo 640px.png') }}" alt="Noir" class="logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+      <span class="logo-text" style="display:none;">Noir</span>
+    </a>
+    <span class="adm-bar-tag">Administración</span>
+    <nav class="adm-bar-nav">
+      <a href="{{ url_for('dashboard.inicio') }}" class="{{ 'active' if request.endpoint == 'dashboard.inicio' }}">Dashboard</a>
+      <a href="{{ url_for('ventas.lista') }}" class="{{ 'active' if request.blueprint == 'ventas' }}">Ventas</a>
+      <a href="{{ url_for('gastos.lista') }}" class="{{ 'active' if request.blueprint == 'gastos' }}">Gastos</a>
+      <a href="{{ url_for('dashboard.historial') }}" class="{{ 'active' if request.endpoint == 'dashboard.historial' }}">Historial</a>
+      <a href="{{ url_for('reportes.inicio') }}" class="{{ 'active' if request.blueprint == 'reportes' }}">Reportes</a>
+      <a href="{{ url_for('admin.panel') }}" class="{{ 'active' if request.blueprint == 'admin' }}">Perfumes</a>
+      <a href="{{ url_for('usuarios.lista') }}" class="{{ 'active' if request.blueprint == 'usuarios' }}">Usuarios</a>
+    </nav>
+    <div class="adm-bar-user">
+      <a href="{{ url_for('tienda.inicio') }}" class="adm-bar-link">Ver tienda</a>
+      <span>{{ current_user.nombre }}</span>
+      <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form">
+        <input type="hidden" name="token" value="{{ token_csrf() }}">
+        <button type="submit" class="btn btn-outline btn-sm">Cerrar sesión</button>
+      </form>
+    </div>
+  </div>
+</header>
+
+<main class="adm-page">
+{% block contenido %}{% endblock %}
+</main>
+<script src="{{ url_for('static', filename='validar.js') }}"></script>
+<script>
+// En pantallas pequeñas los gráficos se desplazan; se deja visible lo más reciente (a la derecha)
+document.querySelectorAll(".chart-wrap").forEach(function (caja) { caja.scrollLeft = caja.scrollWidth; });
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,60 @@
+{% extends "admin_base.html" %}
+{% block titulo %}Historial — Noir{% endblock %}
+{% block contenido %}
+
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow">Libro de movimientos</span>
+      <h1>Historial</h1>
+      <p>Todo el dinero que entra (abonos de las ventas) y que sale (gastos), del más reciente al más antiguo.</p>
+    </div>
+    <svg class="adm-ripple" viewBox="0 0 300 300" aria-hidden="true">
+      <circle cx="150" cy="150" r="60"/><circle cx="150" cy="150" r="100"/><circle cx="150" cy="150" r="140"/>
+    </svg>
+  </div>
+
+  <div class="adm-stats tres">
+    <div class="adm-stat"><div class="adm-stat-label">Ingresos</div><div class="adm-stat-value">{{ totales.ingresos|pesos }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Gastos</div><div class="adm-stat-value">{{ totales.gastos|pesos }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Balance</div><div class="adm-stat-value {{ 'neg' if totales.neto < 0 }}">{{ totales.neto|pesos }}</div></div>
+  </div>
+
+  <form method="get" action="{{ url_for('dashboard.historial') }}" class="adm-filtros">
+    <div class="field"><label for="tipo">Tipo</label>
+      <select id="tipo" name="tipo">
+        <option value="todos" {% if tipo == "todos" %}selected{% endif %}>Ingresos y gastos</option>
+        <option value="ingresos" {% if tipo == "ingresos" %}selected{% endif %}>Solo ingresos</option>
+        <option value="gastos" {% if tipo == "gastos" %}selected{% endif %}>Solo gastos</option>
+      </select></div>
+    <div class="field"><label for="desde">Desde</label><input type="date" id="desde" name="desde" value="{{ desde }}"></div>
+    <div class="field"><label for="hasta">Hasta</label><input type="date" id="hasta" name="hasta" value="{{ hasta }}"></div>
+    <div class="field"><label for="buscar">Buscar</label><input type="text" id="buscar" name="buscar" value="{{ buscar }}" autocomplete="off"></div>
+    <div class="adm-filtros-botones">
+      <button type="submit" class="btn btn-outline">Filtrar</button>
+      <a href="{{ url_for('dashboard.historial') }}" class="btn btn-outline">Limpiar</a>
+      <a href="{{ url_for('dashboard.historial_csv') }}?{{ request.query_string.decode() }}" class="btn btn-primary">Exportar CSV</a>
+    </div>
+  </form>
+
+  <div class="adm-table-wrap">
+    {% if movimientos|length == 0 %}
+      <div class="adm-empty">No hay movimientos para mostrar.</div>
+    {% else %}
+    <table class="adm-table">
+      <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Concepto</th><th>Monto</th></tr></thead>
+      <tbody>
+        {% for m in movimientos %}
+        <tr>
+          <td>{{ m.fecha|fecha if m.con_hora else m.fecha|dia }}</td>
+          <td>{% if m.tipo == "ingreso" %}<span class="adm-pill ok">Ingreso</span>{% else %}<span class="adm-pill out">Gasto</span>{% endif %}</td>
+          <td>{{ m.categoria }}</td>
+          <td><a href="{{ m.url }}">{{ m.concepto }}</a>{% if m.detalle %}<div class="adm-product-meta">{{ m.detalle }}</div>{% endif %}</td>
+          <td class="num {{ 'mov-ingreso' if m.tipo == 'ingreso' else 'mov-gasto' }}">{{ "+" if m.tipo == "ingreso" else "−" }}{{ m.monto|pesos }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+
+{% endblock %}

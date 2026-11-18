@@ -1,0 +1,108 @@
+{% extends "admin_base.html" %}
+{% block titulo %}Reportes — Noir{% endblock %}
+{% block contenido %}
+
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow">Consulta</span>
+      <h1>Reportes de ventas</h1>
+      <p>Filtra las ventas por fechas, perfume, marca o presentación, mira los totales por período y exporta el resultado a CSV.</p>
+    </div>
+    <svg class="adm-ripple" viewBox="0 0 300 300" aria-hidden="true">
+      <circle cx="150" cy="150" r="60"/><circle cx="150" cy="150" r="100"/><circle cx="150" cy="150" r="140"/>
+    </svg>
+  </div>
+
+  <form method="get" action="{{ url_for('reportes.inicio') }}" class="adm-filtros">
+    <div class="field"><label for="desde">Desde</label><input type="date" id="desde" name="desde" value="{{ f.desde }}"></div>
+    <div class="field"><label for="hasta">Hasta</label><input type="date" id="hasta" name="hasta" value="{{ f.hasta }}"></div>
+    <div class="field"><label for="perfume">Perfume</label>
+      <select id="perfume" name="perfume">
+        <option value="">Todos</option>
+        {% for p in perfumes %}<option value="{{ p.id }}" {% if f.perfume == p.id|string %}selected{% endif %}>{{ p.nombre }}</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="marca">Marca</label>
+      <select id="marca" name="marca">
+        <option value="">Todas</option>
+        {% for m in marcas %}<option value="{{ m }}" {% if f.marca == m %}selected{% endif %}>{{ m }}</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="ml">Presentación</label>
+      <select id="ml" name="ml">
+        <option value="">Todas</option>
+        {% for m in presentaciones %}<option value="{{ m }}" {% if f.ml == m|string %}selected{% endif %}>{{ m }} ML</option>{% endfor %}
+      </select></div>
+    <div class="adm-filtros-botones">
+      <button type="submit" class="btn btn-primary">Generar reporte</button>
+      <a href="{{ url_for('reportes.inicio') }}" class="btn btn-outline">Limpiar</a>
+      <a href="{{ url_for('reportes.exportar') }}?{{ consulta }}" class="btn btn-outline">Exportar CSV</a>
+    </div>
+  </form>
+
+  <div class="adm-stats">
+    <div class="adm-stat"><div class="adm-stat-label">Ventas</div><div class="adm-stat-value">{{ t.ventas }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Unidades</div><div class="adm-stat-value">{{ t.unidades }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Vendido</div><div class="adm-stat-value">{{ t.vendido|pesos }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Por cobrar</div><div class="adm-stat-value">{{ t.por_cobrar|pesos }}</div></div>
+  </div>
+
+  <div class="dash-doble">
+    <section class="adm-card">
+      <h2>Ventas por {{ "día" if agrupar == "dia" else "mes" }}</h2>
+      <p class="adm-card-sub">Total vendido en cada período del reporte.</p>
+      {% if periodos %}
+      <div class="chart-wrap">
+      <svg viewBox="0 0 {{ grafico.ancho }} {{ grafico.alto }}" class="chart" role="img" aria-label="Ventas por período">
+        {% for e in grafico.ejes %}
+          <line x1="{{ grafico.izq }}" x2="{{ grafico.der }}" y1="{{ e.y }}" y2="{{ e.y }}" class="chart-grid"/>
+          <text x="{{ grafico.izq - 8 }}" y="{{ e.y + 4 }}" text-anchor="end" class="chart-axis">{{ e.texto }}</text>
+        {% endfor %}
+        {% for b in grafico.barras %}
+          <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" class="bar-ingreso"><title>{{ b.texto }}</title></rect>
+          {% if b.mostrar %}<text x="{{ b.centro }}" y="{{ grafico.alto - 14 }}" text-anchor="middle" class="chart-axis">{{ b.etiqueta }}</text>{% endif %}
+        {% endfor %}
+      </svg>
+      </div>
+      {% else %}<div class="adm-empty">No hay ventas con estos filtros.</div>{% endif %}
+    </section>
+
+    <section class="adm-card">
+      <h2>Totales por período</h2>
+      <p class="adm-card-sub">Resumen del gráfico en cifras.</p>
+      {% if periodos %}
+      <div class="adm-table-wrap" style="border:0; background:transparent;">
+        <table class="adm-table">
+          <thead><tr><th>Período</th><th>Ventas</th><th>Vendido</th></tr></thead>
+          <tbody>
+            {% for p in periodos %}
+            <tr><td>{{ p.nombre }}</td><td>{{ p.ventas }}</td><td class="num">{{ p.vendido|pesos }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}<div class="adm-empty">Sin datos.</div>{% endif %}
+    </section>
+  </div>
+
+  <h2 class="dash-sub">Detalle de ventas</h2>
+  <div class="adm-table-wrap">
+    {% if filas %}
+    <table class="adm-table">
+      <thead><tr><th>Fecha</th><th>Cliente</th><th>Perfume</th><th>Presentación</th><th>Total</th><th>Abonado</th><th>Debe</th></tr></thead>
+      <tbody>
+        {% for r in filas %}
+        <tr>
+          <td>{{ r.fecha|dia }}</td>
+          <td><a href="{{ url_for('ventas.detalle', id=r.id) }}">{{ r.cliente }}</a></td>
+          <td>{{ r.perfume }}<div class="adm-product-meta">{{ r.marca }}</div></td>
+          <td>{{ r.cantidad }} × {{ r.ml }} ML</td>
+          <td class="num">{{ r.total|pesos }}</td>
+          <td class="num">{{ r.abonado|pesos }}</td>
+          <td class="num">{{ r.debe|pesos }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="adm-empty">No hay ventas con estos filtros.</div>{% endif %}
+  </div>
+
+{% endblock %}

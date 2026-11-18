@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }} — Noir{% endblock %}
+{% block contenido %}
+  <p class="eyebrow" style="margin-top:2.5rem;">Error {{ codigo }}</p>
+  <h1 class="section-title">{{ titulo }}</h1>
+  <p style="margin-top:1rem; color:var(--muted); line-height:1.7;">{{ mensaje }}</p>
+  <a href="/" class="btn btn-primary btn-block" style="margin-top:2rem;">Volver a la tienda</a>
+  <a href="{{ url_for('auth.cuenta') }}" class="btn btn-outline btn-block" style="margin-top:.8rem;">Ir a mi cuenta</a>
+{% endblock %}

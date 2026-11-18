@@ -1,0 +1,88 @@
+{% extends "admin_base.html" %}
+{% block titulo %}Ventas — Noir{% endblock %}
+{% block contenido %}
+
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow">Control</span>
+      <h1>Ventas</h1>
+      <p>Registra lo que vendes, lo que cada cliente ha abonado y lo que todavía debe.</p>
+    </div>
+    <svg class="adm-ripple" viewBox="0 0 300 300" aria-hidden="true">
+      <circle cx="150" cy="150" r="60"/>
+      <circle cx="150" cy="150" r="100"/>
+      <circle cx="150" cy="150" r="140"/>
+    </svg>
+  </div>
+
+  <div class="adm-stats">
+    <div class="adm-stat"><div class="adm-stat-label">Ventas</div><div class="adm-stat-value">{{ datos.cantidad }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Vendido</div><div class="adm-stat-value">{{ datos.vendido|pesos }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Cobrado</div><div class="adm-stat-value">{{ datos.cobrado|pesos }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Por cobrar</div><div class="adm-stat-value">{{ datos.por_cobrar|pesos }}</div></div>
+  </div>
+
+  {% if mensaje %}
+    <div class="adm-msg {{ tipo }}">{{ mensaje }}</div>
+  {% endif %}
+
+  <div class="adm-toolbar">
+    <form method="get" action="{{ url_for('ventas.lista') }}" class="adm-search" id="buscador" data-tipo="ventas" data-api="{{ url_for('api.ventas') }}">
+      <input type="text" name="buscar" autocomplete="off" placeholder="Buscar por cliente…" value="{{ buscar }}" aria-label="Buscar cliente">
+      {% if solo_deuda %}<input type="hidden" name="estado" value="deuda">{% endif %}
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    </form>
+    {% if solo_deuda %}
+      <a href="{{ url_for('ventas.lista', buscar=buscar) }}" class="btn btn-outline">Ver todas</a>
+    {% else %}
+      <a href="{{ url_for('ventas.lista', buscar=buscar, estado='deuda') }}" class="btn btn-outline">Solo con deuda</a>
+    {% endif %}
+    <span class="adm-count" id="contador">{{ pedidos|length }} {{ "venta" if pedidos|length == 1 else "ventas" }}</span>
+    <a href="{{ url_for('ventas.nueva') }}" class="btn btn-primary">Registrar venta</a>
+  </div>
+
+  <div class="adm-table-wrap" id="resultados">
+    {% if pedidos|length == 0 %}
+      <div class="adm-empty">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="20"/><circle cx="50" cy="50" r="35"/><circle cx="50" cy="50" r="48"/></svg>
+        No hay ventas para mostrar.
+      </div>
+    {% else %}
+    <table class="adm-table">
+      <thead>
+        <tr><th>Fecha</th><th>Cliente</th><th>Perfume</th><th>Total</th><th>Abonado</th><th>Debe</th><th>Estado</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for p in pedidos %}
+        <tr>
+          <td>{{ p.fecha|fecha }}</td>
+          <td>{{ p.cliente_nombre }}</td>
+          <td>
+            {% if p.detalle %}
+              {{ p.detalle.perfume.nombre }}
+              <div class="adm-product-meta">{{ p.detalle.cantidad }} × {{ p.detalle.ml }} ML</div>
+            {% endif %}
+          </td>
+          <td class="num">{{ p.total|pesos }}</td>
+          <td class="num">{{ p.abonado|pesos }}</td>
+          <td class="num">{{ p.debe|pesos }}</td>
+          <td>
+            {% if p.debe > 0 %}<span class="adm-pill out">Debe</span>{% else %}<span class="adm-pill ok">Pagada</span>{% endif %}
+          </td>
+          <td>
+            <div class="adm-actions">
+              <a href="{{ url_for('ventas.detalle', id=p.id) }}" class="adm-btn-edit">Ver</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='buscar.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "admin_base.html" %}
+{% block titulo %}Panel de administración — Noir{% endblock %}
+{% block contenido %}
+
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow">Catálogo</span>
+      <h1>Perfumes</h1>
+      <p>Administra las fragancias de Noir: sus precios por presentación, su disponibilidad y cuáles aparecen en los más vendidos.</p>
+    </div>
+    <svg class="adm-ripple" viewBox="0 0 300 300" aria-hidden="true">
+      <circle cx="150" cy="150" r="60"/>
+      <circle cx="150" cy="150" r="100"/>
+      <circle cx="150" cy="150" r="140"/>
+    </svg>
+  </div>
+
+  <div class="adm-stats">
+    <div class="adm-stat"><div class="adm-stat-label">Perfumes</div><div class="adm-stat-value">{{ datos.total }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Disponibles</div><div class="adm-stat-value">{{ datos.disponibles }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Agotados</div><div class="adm-stat-value">{{ datos.agotados }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Más vendidos</div><div class="adm-stat-value">{{ datos.vendidos }}</div></div>
+  </div>
+
+  {% if mensaje %}
+    <div class="adm-msg {{ tipo }}">{{ mensaje }}</div>
+  {% endif %}
+
+  <div class="adm-toolbar">
+    <form method="get" action="{{ url_for('admin.panel') }}" class="adm-search" id="buscador" data-tipo="perfumes" data-api="{{ url_for('api.perfumes') }}">
+      <input type="text" name="buscar" autocomplete="off" placeholder="Buscar por perfume o marca…" value="{{ buscar }}" aria-label="Buscar perfume">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    </form>
+    <span class="adm-count" id="contador">{{ perfumes|length }} {{ "perfume" if perfumes|length == 1 else "perfumes" }}</span>
+    <a href="{{ url_for('admin.formulario') }}" class="btn btn-primary">Agregar perfume</a>
+  </div>
+
+  <div class="adm-table-wrap" id="resultados" data-token="{{ token }}">
+    {% if perfumes|length == 0 %}
+      <div class="adm-empty">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="20"/><circle cx="50" cy="50" r="35"/><circle cx="50" cy="50" r="48"/></svg>
+        No se encontraron perfumes{% if buscar %} para “{{ buscar }}”{% endif %}.
+      </div>
+    {% else %}
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th>Perfume</th><th>Género</th><th>5 ML</th><th>10 ML</th><th>100 ML</th><th>Estado</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in perfumes %}
+        {% set precios = {} %}
+        {% for t in p.tamanos %}{% if precios.update({t.ml: t.precio}) %}{% endif %}{% endfor %}
+        <tr>
+          <td>
+            <div class="adm-product">
+              <div class="adm-thumb"><img src="{{ url_for('static', filename=p.imagen) if p.imagen else '' }}" alt="" onerror="this.style.display='none';"></div>
+              <div>
+                <div class="adm-product-name">
+                  {{ p.nombre }}
+                  {% if p.mas_vendido == 1 %}<span class="adm-tag">Más vendido</span>{% endif %}
+                </div>
+                <div class="adm-product-meta">{{ p.marca }} · {{ p.familia_tag }}</div>
+              </div>
+            </div>
+          </td>
+          <td>{{ p.genero }}</td>
+          {% for ml in [5, 10, 100] %}
+            <td class="num {{ 'num-empty' if ml == 100 and not precios[ml] else '' }}">
+              {% if precios[ml] %}${{ "{:,}".format(precios[ml]).replace(",", ".") }}{% else %}—{% endif %}
+            </td>
+          {% endfor %}
+          <td>
+            {% if p.disponible == 1 %}<span class="adm-pill ok">Disponible</span>{% else %}<span class="adm-pill out">Agotado</span>{% endif %}
+          </td>
+          <td>
+            <div class="adm-actions">
+              <a href="{{ url_for('admin.formulario', id=p.id) }}" class="adm-btn-edit">Editar</a>
+              <form method="post" action="{{ url_for('admin.eliminar', id=p.id) }}" onsubmit="return confirm('¿Eliminar este perfume?');">
+                <input type="hidden" name="token" value="{{ token }}">
+                <button type="submit" class="adm-btn-del">Eliminar</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='buscar.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "admin_base.html" %}
+{% block titulo %}{{ "Editar" if id > 0 else "Registrar" }} gasto — Noir{% endblock %}
+{% block contenido %}
+
+  <a href="{{ url_for('gastos.lista') }}" class="adm-back">← Volver a gastos</a>
+
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow">{{ "Editar gasto" if id > 0 else "Nuevo gasto" }}</span>
+      <h1>{{ "Editar gasto" if id > 0 else "Registrar gasto" }}</h1>
+      <p>Cada gasto se descuenta del dinero en mano en el dashboard.</p>
+    </div>
+  </div>
+
+  <form method="post" class="form-validar" action="{{ url_for('gastos.formulario', id=id) if id > 0 else url_for('gastos.formulario') }}">
+    <input type="hidden" name="token" value="{{ token }}">
+
+    <section class="adm-card">
+      <h2>Datos del gasto</h2>
+      <div class="adm-fields">
+        <div class="field full">
+          <label for="concepto">Concepto</label>
+          <input type="text" id="concepto" name="concepto" maxlength="120" value="{{ d.concepto }}" placeholder="Ej: Compra de 10 frascos de 100 ML" required>
+        </div>
+        <div class="field">
+          <label for="categoria">Categoría</label>
+          <select id="categoria" name="categoria" required>
+            {% for c in categorias %}<option value="{{ c }}" {% if d.categoria == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="fecha">Fecha</label>
+          <input type="date" id="fecha" name="fecha" value="{{ d.fecha }}" max="{{ hoy }}" required>
+        </div>
+        <div class="field">
+          <label for="monto">Monto</label>
+          <div class="adm-money"><span>$</span><input type="number" id="monto" name="monto" min="1" step="1" value="{{ d.monto }}" required></div>
+        </div>
+        <div class="field full">
+          <label for="nota">Nota (opcional)</label>
+          <textarea id="nota" name="nota" rows="2" maxlength="255">{{ d.nota }}</textarea>
+        </div>
+      </div>
+    </section>
+
+    {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
+
+    <div class="adm-form-actions">
+      <a href="{{ url_for('gastos.lista') }}" class="btn btn-outline">Cancelar</a>
+      <button type="submit" class="btn btn-primary">Guardar gasto</button>
+    </div>
+  </form>
+
+{% endblock %}

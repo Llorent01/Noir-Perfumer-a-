@@ -1,0 +1,70 @@
+{% extends "admin_base.html" %}
+{% block titulo %}Gastos — Noir{% endblock %}
+{% block contenido %}
+
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow">Control</span>
+      <h1>Gastos</h1>
+      <p>Registra lo que gasta el negocio (compra de perfumes, empaques, publicidad…) para saber cuánto dinero queda realmente.</p>
+    </div>
+    <svg class="adm-ripple" viewBox="0 0 300 300" aria-hidden="true">
+      <circle cx="150" cy="150" r="60"/><circle cx="150" cy="150" r="100"/><circle cx="150" cy="150" r="140"/>
+    </svg>
+  </div>
+
+  <div class="adm-stats tres">
+    <div class="adm-stat"><div class="adm-stat-label">Total en esta lista</div><div class="adm-stat-value">{{ total|pesos }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Gastos registrados</div><div class="adm-stat-value">{{ gastos|length }}</div></div>
+    <div class="adm-stat"><div class="adm-stat-label">Promedio por gasto</div><div class="adm-stat-value">{{ ((total / gastos|length)|round|int)|pesos if gastos else "$0" }}</div></div>
+  </div>
+
+  {% if mensaje %}<div class="adm-msg {{ tipo }}">{{ mensaje }}</div>{% endif %}
+
+  <form method="get" action="{{ url_for('gastos.lista') }}" class="adm-filtros">
+    <div class="field"><label for="buscar">Concepto</label><input type="text" id="buscar" name="buscar" value="{{ buscar }}" autocomplete="off"></div>
+    <div class="field"><label for="categoria">Categoría</label>
+      <select id="categoria" name="categoria">
+        <option value="">Todas</option>
+        {% for c in categorias %}<option value="{{ c }}" {% if categoria == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="desde">Desde</label><input type="date" id="desde" name="desde" value="{{ desde }}"></div>
+    <div class="field"><label for="hasta">Hasta</label><input type="date" id="hasta" name="hasta" value="{{ hasta }}"></div>
+    <div class="adm-filtros-botones">
+      <button type="submit" class="btn btn-outline">Filtrar</button>
+      <a href="{{ url_for('gastos.lista') }}" class="btn btn-outline">Limpiar</a>
+      <a href="{{ url_for('gastos.formulario') }}" class="btn btn-primary">Registrar gasto</a>
+    </div>
+  </form>
+
+  <div class="adm-table-wrap">
+    {% if gastos|length == 0 %}
+      <div class="adm-empty">No hay gastos para mostrar.</div>
+    {% else %}
+    <table class="adm-table">
+      <thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Monto</th><th>Registró</th><th></th></tr></thead>
+      <tbody>
+        {% for g in gastos %}
+        <tr>
+          <td>{{ g.fecha|dia }}</td>
+          <td>{{ g.concepto }}{% if g.nota %}<div class="adm-product-meta">{{ g.nota }}</div>{% endif %}</td>
+          <td>{{ g.categoria }}</td>
+          <td class="num">{{ g.monto|pesos }}</td>
+          <td>{{ g.usuario.nombre if g.usuario else "—" }}</td>
+          <td>
+            <div class="adm-actions">
+              <a href="{{ url_for('gastos.formulario', id=g.id) }}" class="adm-btn-edit">Editar</a>
+              <form method="post" action="{{ url_for('gastos.eliminar', id=g.id) }}" onsubmit="return confirm('¿Eliminar este gasto?');">
+                <input type="hidden" name="token" value="{{ token }}">
+                <button type="submit" class="adm-btn-del">Eliminar</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+
+{% endblock %}

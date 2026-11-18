@@ -1,0 +1,67 @@
+{% extends "admin_base.html" %}
+{% block titulo %}{{ "Editar" if id > 0 else "Agregar" }} usuario — Noir{% endblock %}
+{% block contenido %}
+
+  <a href="{{ url_for('usuarios.lista') }}" class="adm-back">← Volver a usuarios</a>
+
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow">{{ "Editar cuenta" if id > 0 else "Nueva cuenta" }}</span>
+      <h1>{{ d.nombre if id > 0 else "Agregar usuario" }}</h1>
+      <p>Define el nombre, el correo y si la cuenta es de cliente o de administrador.</p>
+    </div>
+  </div>
+
+  <form class="form-validar" method="post" action="{{ url_for('usuarios.formulario', id=id) if id > 0 else url_for('usuarios.formulario') }}">
+    <input type="hidden" name="token" value="{{ token }}">
+
+    <section class="adm-card">
+      <h2>Datos de la cuenta</h2>
+      <div class="adm-fields">
+        <div class="field">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" name="nombre" value="{{ d.nombre }}" required>
+        </div>
+        <div class="field">
+          <label for="correo">Correo</label>
+          <input type="email" id="correo" name="correo" value="{{ d.correo }}" required>
+        </div>
+        <div class="field">
+          <label for="rol">Rol</label>
+          <select id="rol" name="rol" {% if es_propio %}disabled{% endif %}>
+            <option value="cliente" {% if d.rol == "cliente" %}selected{% endif %}>Cliente</option>
+            <option value="admin" {% if d.rol == "admin" %}selected{% endif %}>Administrador</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="contrasena">{{ "Nueva contraseña (opcional)" if id > 0 else "Contraseña" }}</label>
+          <input type="password" id="contrasena" name="contrasena" minlength="6" {% if id == 0 %}required{% endif %}>
+        </div>
+      </div>
+      {% if es_propio %}
+        <p class="adm-hint">Es tu propia cuenta: no puedes quitarte el rol de administrador ni desactivarla.</p>
+      {% endif %}
+    </section>
+
+    <section class="adm-card">
+      <h2>Acceso</h2>
+      <label class="adm-switch-row">
+        <span class="adm-switch-text">
+          <strong>Cuenta activa</strong>
+          <span>Si la apagas, esta persona ya no podrá iniciar sesión.</span>
+        </span>
+        <input type="checkbox" class="adm-switch" name="estado" value="1" {% if d.estado == 1 %}checked{% endif %} {% if es_propio %}disabled{% endif %}>
+      </label>
+    </section>
+
+    {% if error %}
+      <div class="adm-error">{{ error }}</div>
+    {% endif %}
+
+    <div class="adm-form-actions">
+      <a href="{{ url_for('usuarios.lista') }}" class="btn btn-outline">Cancelar</a>
+      <button type="submit" class="btn btn-primary">Guardar usuario</button>
+    </div>
+  </form>
+
+{% endblock %}

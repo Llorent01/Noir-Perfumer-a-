@@ -1,0 +1,68 @@
+erDiagram
+    USUARIOS ||--o{ PEDIDOS : "registra (opcional)"
+    USUARIOS ||--o{ GASTOS : "registra"
+    PERFUMES ||--|{ TAMANOS : "tiene presentaciones"
+    PERFUMES ||--o{ DETALLE_PEDIDO : "se vende en"
+    PEDIDOS ||--|{ DETALLE_PEDIDO : "contiene"
+    PEDIDOS ||--o{ ABONOS : "recibe pagos"
+
+    USUARIOS {
+        int id PK
+        string nombre
+        string correo UK
+        string contrasena
+        enum rol
+        int estado
+        datetime fecha_registro
+    }
+    PERFUMES {
+        int id PK
+        string nombre
+        string marca
+        string genero
+        string familia
+        string familia_tag
+        text notas
+        text descripcion
+        string imagen
+        int mas_vendido
+        int disponible
+    }
+    TAMANOS {
+        int id PK
+        int perfume_id FK
+        int ml
+        int precio
+    }
+    PEDIDOS {
+        int id PK
+        int usuario_id FK
+        string cliente_nombre
+        datetime fecha
+        int total
+        string estado
+    }
+    DETALLE_PEDIDO {
+        int id PK
+        int pedido_id FK
+        int perfume_id FK
+        int ml
+        int cantidad
+        int precio
+    }
+    ABONOS {
+        int id PK
+        int pedido_id FK
+        int monto
+        datetime fecha
+    }
+    GASTOS {
+        int id PK
+        date fecha
+        string concepto
+        string categoria
+        int monto
+        string nota
+        int usuario_id FK
+        datetime creado
+    }

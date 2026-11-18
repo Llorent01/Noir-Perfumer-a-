@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block titulo %}Crear cuenta — Noir{% endblock %}
+{% block contenido %}
+  <h1 class="section-title">Crear cuenta</h1>
+
+  <form class="form-validar" method="post" action="{{ url_for('auth.registro') }}" style="margin-top:2rem;">
+    <input type="hidden" name="token" value="{{ token_csrf() }}">
+    <div class="field">
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" name="nombre" value="{{ nombre }}" required>
+    </div>
+    <div class="field" style="margin-top:1rem;">
+      <label for="correo">Correo</label>
+      <input type="email" id="correo" name="correo" value="{{ correo }}" required>
+    </div>
+    <div class="field" style="margin-top:1rem;">
+      <label for="contrasena">Contraseña</label>
+      <input type="password" id="contrasena" name="contrasena" minlength="6" required>
+    </div>
+    <div class="field" style="margin-top:1rem;">
+      <label for="confirmar">Confirmar contraseña</label>
+      <input type="password" id="confirmar" name="confirmar" data-igual="contrasena" required>
+    </div>
+
+    <p class="auth-error">{{ error }}</p>
+
+    <button type="submit" class="btn btn-primary btn-block">Crear cuenta</button>
+  </form>
+
+  <p style="margin-top:1.5rem; font-size:.85rem;">¿Ya tienes cuenta? <a href="{{ url_for('auth.login') }}" style="text-decoration:underline;">Iniciar sesión</a></p>
+{% endblock %}

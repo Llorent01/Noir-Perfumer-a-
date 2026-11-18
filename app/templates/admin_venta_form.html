@@ -1,0 +1,118 @@
+{% extends "admin_base.html" %}
+{% block titulo %}Registrar venta — Noir{% endblock %}
+{% block contenido %}
+
+  <a href="{{ url_for('ventas.lista') }}" class="adm-back">← Volver a ventas</a>
+
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow">Nueva venta</span>
+      <h1>Registrar venta</h1>
+      <p>Anota el cliente, el perfume y cuánto pagó. Si pagó menos del total, la diferencia queda como deuda y podrás registrar abonos después.</p>
+    </div>
+  </div>
+
+  <form class="form-validar" method="post" action="{{ url_for('ventas.nueva') }}">
+    <input type="hidden" name="token" value="{{ token }}">
+
+    <section class="adm-card">
+      <h2>Datos de la venta</h2>
+      <div class="adm-fields">
+        <div class="field full">
+          <label for="cliente">Nombre del cliente</label>
+          <input type="text" id="cliente" name="cliente" value="{{ d.cliente }}" required>
+        </div>
+        <div class="field full">
+          <label for="perfume_id">Perfume</label>
+          <select id="perfume_id" name="perfume_id" required>
+            <option value="">Elige un perfume…</option>
+            {% for p in perfumes %}
+              <option value="{{ p.id }}" {% if d.perfume_id == p.id|string %}selected{% endif %}>{{ p.nombre }} — {{ p.marca }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="ml">Presentación</label>
+          <select id="ml" name="ml">
+            {% for m in [5, 10, 100] %}
+              <option value="{{ m }}" {% if d.ml == m|string %}selected{% endif %}>{{ m }} ML{{ " (frasco completo)" if m == 100 }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="cantidad">Cantidad</label>
+          <input type="number" id="cantidad" name="cantidad" min="1" step="1" value="{{ d.cantidad }}" required>
+        </div>
+        <div class="field">
+          <label for="total">Total a pagar</label>
+          <div class="adm-money"><span>$</span><input type="number" id="total" name="total" min="1" step="1" value="{{ d.total }}" required></div>
+        </div>
+        <div class="field">
+          <label for="abono">Pagó ahora</label>
+          <div class="adm-money"><span>$</span><input type="number" id="abono" name="abono" min="0" step="1" data-menor-igual="total" value="{{ d.abono }}"></div>
+        </div>
+      </div>
+      <p class="adm-hint" id="textoDebe"></p>
+    </section>
+
+    {% if error %}
+      <div class="adm-error">{{ error }}</div>
+    {% endif %}
+
+    <div class="adm-form-actions">
+      <a href="{{ url_for('ventas.lista') }}" class="btn btn-outline">Cancelar</a>
+      <button type="submit" class="btn btn-primary">Guardar venta</button>
+    </div>
+  </form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+var precios = {{ precios|tojson }};
+var totalTocado = {{ "true" if d.total else "false" }};
+var abonoTocado = {{ "true" if d.abono else "false" }};
+
+var campoPerfume = document.getElementById("perfume_id");
+var campoMl = document.getElementById("ml");
+var campoCantidad = document.getElementById("cantidad");
+var campoTotal = document.getElementById("total");
+var campoAbono = document.getElementById("abono");
+var textoDebe = document.getElementById("textoDebe");
+
+function sugerirTotal() {
+  var lista = precios[campoPerfume.value];
+  if (!totalTocado && lista && lista[campoMl.value]) {
+    campoTotal.value = lista[campoMl.value] * (Number(campoCantidad.value) || 1);
+  }
+  if (!abonoTocado) {
+    campoAbono.value = campoTotal.value;
+  }
+  // Si estos campos tenían un error viejo, se vuelve a revisar con el valor nuevo
+  [campoTotal, campoAbono].forEach(function (campo) {
+    if (campo.classList.contains("campo-invalido")) {
+      validarCampo(campo);
+    }
+  });
+  mostrarDebe();
+}
+
+function mostrarDebe() {
+  var total = Number(campoTotal.value) || 0;
+  var abono = Number(campoAbono.value) || 0;
+  if (total > 0) {
+    var debe = total - abono;
+    textoDebe.textContent = debe > 0 ? "Quedaría debiendo $" + debe.toLocaleString("es-CO") : "Pagada completa";
+  } else {
+    textoDebe.textContent = "";
+  }
+}
+
+campoPerfume.onchange = sugerirTotal;
+campoMl.onchange = sugerirTotal;
+campoCantidad.oninput = sugerirTotal;
+campoTotal.oninput = function () { totalTocado = true; sugerirTotal(); };
+campoAbono.oninput = function () { abonoTocado = true; mostrarDebe(); };
+mostrarDebe();
+</script>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titulo %}Mi cuenta — Noir{% endblock %}
+{% block contenido %}
+  <h1 class="section-title">Hola, {{ current_user.nombre }}</h1>
+  <span class="auth-role-badge">{{ "Administrador" if current_user.rol == "admin" else "Cliente" }}</span>
+
+  {% if current_user.rol == "admin" %}
+    <a href="{{ url_for('dashboard.inicio') }}" class="btn btn-primary btn-block" style="margin-top:2rem;">Panel de administración</a>
+  {% endif %}
+
+  <a href="/" class="btn btn-outline btn-block" style="margin-top:.8rem;">Volver a la tienda</a>
+  <form method="post" action="{{ url_for('auth.logout') }}">
+    <input type="hidden" name="token" value="{{ token_csrf() }}">
+    <button type="submit" class="btn btn-primary btn-block" style="margin-top:.8rem;">Cerrar sesión</button>
+  </form>
+{% endblock %}

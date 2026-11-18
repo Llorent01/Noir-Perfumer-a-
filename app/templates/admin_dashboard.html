@@ -1,0 +1,162 @@
+{% extends "admin_base.html" %}
+{% block titulo %}Dashboard — Noir{% endblock %}
+{% block contenido %}
+
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow">Resumen del negocio</span>
+      <h1>Dashboard</h1>
+      <p>Así van las finanzas de Noir al {{ hoy|dia }}. Todo se calcula con las ventas, abonos y gastos que has registrado.</p>
+    </div>
+    <svg class="adm-ripple" viewBox="0 0 300 300" aria-hidden="true">
+      <circle cx="150" cy="150" r="60"/><circle cx="150" cy="150" r="100"/><circle cx="150" cy="150" r="140"/>
+    </svg>
+  </div>
+
+  <div class="dash-acciones">
+    <a href="{{ url_for('ventas.nueva') }}" class="btn btn-primary">Registrar venta</a>
+    <a href="{{ url_for('gastos.formulario') }}" class="btn btn-outline">Registrar gasto</a>
+    <a href="{{ url_for('reportes.inicio') }}" class="btn btn-outline">Ver reportes</a>
+  </div>
+
+  <div class="dash-kpis">
+    <div class="kpi kpi-main">
+      <div class="kpi-label">Dinero en mano</div>
+      <div class="kpi-value {{ 'neg' if r.en_mano < 0 }}">{{ r.en_mano|pesos }}</div>
+      <div class="kpi-note">Cobrado − gastos. Es lo que realmente tienen disponible.</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Ganancia total</div>
+      <div class="kpi-value {{ 'neg' if r.ganancia < 0 }}">{{ r.ganancia|pesos }}</div>
+      <div class="kpi-note">Vendido − gastos, contando lo que aún deben.</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Gastos</div>
+      <div class="kpi-value">{{ r.gastos|pesos }}</div>
+      <div class="kpi-note">Este mes: {{ r.gastos_mes|pesos }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Cobrado</div>
+      <div class="kpi-value">{{ r.cobrado|pesos }}</div>
+      <div class="kpi-note">Este mes: {{ r.cobrado_mes|pesos }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Por cobrar</div>
+      <div class="kpi-value">{{ r.por_cobrar|pesos }}</div>
+      <div class="kpi-note">Vendido − cobrado.</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Vendido</div>
+      <div class="kpi-value">{{ r.vendido|pesos }}</div>
+      <div class="kpi-note">{{ r.ventas }} {{ "venta" if r.ventas == 1 else "ventas" }} · este mes: {{ r.vendido_mes|pesos }}</div>
+    </div>
+  </div>
+
+  <div class="dash-doble">
+    <section class="adm-card">
+      <h2>Ingresos y gastos</h2>
+      <p class="adm-card-sub">Dinero cobrado contra dinero gastado en los últimos 6 meses.</p>
+      <div class="chart-leyenda">
+        <span><i class="punto punto-ingreso"></i> Ingresos (abonos)</span>
+        <span><i class="punto punto-gasto"></i> Gastos</span>
+      </div>
+      {% if grafico.tiene_datos %}
+      <div class="chart-wrap">
+      <svg viewBox="0 0 {{ grafico.ancho }} {{ grafico.alto }}" class="chart" role="img" aria-label="Ingresos y gastos de los últimos 6 meses">
+        {% for e in grafico.ejes %}
+          <line x1="{{ grafico.izq }}" x2="{{ grafico.der }}" y1="{{ e.y }}" y2="{{ e.y }}" class="chart-grid"/>
+          <text x="{{ grafico.izq - 8 }}" y="{{ e.y + 4 }}" text-anchor="end" class="chart-axis">{{ e.texto }}</text>
+        {% endfor %}
+        {% for b in grafico.barras %}
+          <rect x="{{ b.x1 }}" y="{{ b.y1 }}" width="{{ b.ancho_barra }}" height="{{ b.h1 }}" class="bar-ingreso"><title>{{ b.etiqueta }} · Ingresos {{ b.ingresos|pesos }}</title></rect>
+          <rect x="{{ b.x2 }}" y="{{ b.y2 }}" width="{{ b.ancho_barra }}" height="{{ b.h2 }}" class="bar-gasto"><title>{{ b.etiqueta }} · Gastos {{ b.gastos|pesos }}</title></rect>
+          <text x="{{ b.centro }}" y="{{ grafico.base + 22 }}" text-anchor="middle" class="chart-axis">{{ b.etiqueta }}</text>
+        {% endfor %}
+      </svg>
+      </div>
+      {% else %}
+        <div class="adm-empty">Cuando registres abonos y gastos, aquí verás el comparativo.</div>
+      {% endif %}
+    </section>
+
+    <section class="adm-card">
+      <h2>Gastos por categoría</h2>
+      <p class="adm-card-sub">En qué se ha ido el dinero.</p>
+      {% if categorias %}
+        <ul class="cat-lista">
+          {% for c in categorias %}
+          <li>
+            <div class="cat-fila"><span>{{ c.categoria }}</span><strong>{{ c.monto|pesos }}</strong></div>
+            <div class="cat-barra"><span style="width: {{ c.porcentaje }}%;"></span></div>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="adm-empty">Aún no hay gastos registrados.</div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="dash-doble">
+    <section>
+      <div class="dash-titulo"><h2>Últimas ventas</h2><a href="{{ url_for('ventas.lista') }}">Ver todas</a></div>
+      <div class="adm-table-wrap">
+        {% if ventas %}
+        <table class="adm-table">
+          <thead><tr><th>Venta</th><th>Debe</th></tr></thead>
+          <tbody>
+            {% for v in ventas %}
+            <tr>
+              <td><a href="{{ url_for('ventas.detalle', id=v.id) }}">{{ v.cliente_nombre }}</a>
+                  <div class="adm-product-meta">{{ v.fecha|dia }}{% if v.detalle %} · {{ v.detalle.perfume.nombre }} {{ v.detalle.ml }} ML{% endif %} · {{ v.total|pesos }}</div></td>
+              <td class="num">{% if v.debe > 0 %}{{ v.debe|pesos }}{% else %}<span class="adm-pill ok">Pagada</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="adm-empty">Todavía no hay ventas.</div>{% endif %}
+      </div>
+    </section>
+
+    <section>
+      <div class="dash-titulo"><h2>Mayores deudas</h2><a href="{{ url_for('ventas.lista', estado='deuda') }}">Ver con deuda</a></div>
+      <div class="adm-table-wrap">
+        {% if deudas %}
+        <table class="adm-table">
+          <thead><tr><th>Cliente</th><th>Debe</th></tr></thead>
+          <tbody>
+            {% for d in deudas %}
+            <tr>
+              <td><a href="{{ url_for('ventas.detalle', id=d.pedido.id) }}">{{ d.pedido.cliente_nombre }}</a>
+                  <div class="adm-product-meta">Venta de {{ d.pedido.total|pesos }} · {{ d.pedido.fecha|dia }}</div></td>
+              <td class="num">{{ d.debe|pesos }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="adm-empty">Nadie debe dinero. ¡Todo al día!</div>{% endif %}
+      </div>
+    </section>
+  </div>
+
+  <section style="margin-top:2.4rem;">
+    <div class="dash-titulo"><h2>Últimos movimientos de dinero</h2><a href="{{ url_for('dashboard.historial') }}">Ver historial completo</a></div>
+    <div class="adm-table-wrap">
+      {% if movimientos %}
+      <table class="adm-table">
+        <thead><tr><th>Movimiento</th><th>Monto</th></tr></thead>
+        <tbody>
+          {% for m in movimientos %}
+          <tr>
+            <td><a href="{{ m.url }}">{{ m.concepto }}</a>
+                <div class="adm-product-meta">{{ m.fecha|fecha if m.con_hora else m.fecha|dia }} · {{ "Ingreso" if m.tipo == "ingreso" else "Gasto" }}{% if m.detalle %} · {{ m.detalle }}{% endif %}</div></td>
+            <td class="num {{ 'mov-ingreso' if m.tipo == 'ingreso' else 'mov-gasto' }}">{{ "+" if m.tipo == "ingreso" else "−" }}{{ m.monto|pesos }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<div class="adm-empty">Aún no hay movimientos.</div>{% endif %}
+    </div>
+  </section>
+
+{% endblock %}
